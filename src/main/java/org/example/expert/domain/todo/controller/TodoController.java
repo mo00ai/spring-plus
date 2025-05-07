@@ -28,7 +28,7 @@ public class TodoController {
     ) {
         return ResponseEntity.ok(todoService.saveTodo(authUser, todoSaveRequest));
     }
-    
+
 
     @GetMapping("/todos")
     public ResponseEntity<Page<TodoResponse>> getTodos(
