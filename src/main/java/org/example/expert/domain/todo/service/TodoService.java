@@ -1,10 +1,14 @@
 package org.example.expert.domain.todo.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import lombok.RequiredArgsConstructor;
 import org.example.expert.client.WeatherClient;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
+import org.example.expert.domain.todo.dto.request.TodoSearchCond;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
 import org.example.expert.domain.todo.entity.Todo;
@@ -19,12 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class TodoService {
 
     private final TodoRepository todoRepository;
     private final WeatherClient weatherClient;
 
+    @Transactional
     public TodoSaveResponse saveTodo(AuthUser authUser, TodoSaveRequest todoSaveRequest) {
         User user = User.fromAuthUser(authUser);
 
@@ -47,10 +51,25 @@ public class TodoService {
         );
     }
 
-    public Page<TodoResponse> getTodos(int page, int size) {
+    @Transactional(readOnly = true)
+    public Page<TodoResponse> getTodos(TodoSearchCond cond, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(pageable);
+        System.out.println("cond weather = " + cond.getWeather());
+        System.out.println("cond startDate = " + cond.getStartDate());
+        System.out.println("cond endDate = " + cond.getEndDate());
+
+
+
+        LocalDateTime startDate = (cond.getStartDate() != null) ?  cond.getStartDate().atStartOfDay() : null;
+        LocalDateTime endDate = (cond.getEndDate() != null) ? cond.getEndDate().atTime(23,59,59):null;
+        String weather = cond.getWeather();
+
+        System.out.println("weather = " + weather);
+        System.out.println("startDate = " + startDate);
+        System.out.println("endDate = " + endDate);
+
+        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(weather,startDate,endDate,pageable);
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
@@ -63,6 +82,31 @@ public class TodoService {
         ));
     }
 
+    // @Transactional(readOnly = true)
+    // public Page<TodoResponse> getTodos(String weather, LocalDate startDate, LocalDate endDate, int page, int size) {
+    //     Pageable pageable = PageRequest.of(page - 1, size);
+    //
+    //     LocalDateTime startDateTime = (startDate != null) ?  startDate.atStartOfDay() : null;
+    //     LocalDateTime endDateTime = (endDate != null) ? endDate.atStartOfDay() : null;
+    //
+    //     System.out.println("weather = " + weather);
+    //     System.out.println("startDate = " + startDate);
+    //     System.out.println("endDate = " + endDate);
+    //
+    //     Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(weather,startDateTime,endDateTime,pageable);
+    //
+    //     return todos.map(todo -> new TodoResponse(
+    //             todo.getId(),
+    //             todo.getTitle(),
+    //             todo.getContents(),
+    //             todo.getWeather(),
+    //             new UserResponse(todo.getUser().getId(), todo.getUser().getEmail()),
+    //             todo.getCreatedAt(),
+    //             todo.getModifiedAt()
+    //     ));
+    // }
+
+    @Transactional(readOnly = true)
     public TodoResponse getTodo(long todoId) {
         Todo todo = todoRepository.findByIdWithUser(todoId)
                 .orElseThrow(() -> new InvalidRequestException("Todo not found"));
