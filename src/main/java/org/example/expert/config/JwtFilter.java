@@ -11,6 +11,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.expert.domain.user.enums.UserRole;
+import org.example.expert.security.CustomUserDetailsService;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
@@ -19,6 +24,7 @@ import java.io.IOException;
 public class JwtFilter implements Filter {
 
     private final JwtUtil jwtUtil;
+    private final CustomUserDetailsService userDetailsService;
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -57,9 +63,22 @@ public class JwtFilter implements Filter {
 
             UserRole userRole = UserRole.valueOf(claims.get("userRole", String.class));
 
-            httpRequest.setAttribute("userId", Long.parseLong(claims.getSubject()));
-            httpRequest.setAttribute("email", claims.get("email"));
-            httpRequest.setAttribute("userRole", claims.get("userRole"));
+            // httpRequest.setAttribute("userId", Long.parseLong(claims.getSubject()));
+            // httpRequest.setAttribute("nickName", claims.get("nickname"));
+            // httpRequest.setAttribute("email", claims.get("email"));
+            // httpRequest.setAttribute("userRole", claims.get("userRole"));
+
+            if (claims != null) {
+                String email = String.valueOf(claims.get("email"));
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+                UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+
+
 
             if (url.startsWith("/admin")) {
                 // 관리자 권한이 없는 경우 403을 반환합니다.

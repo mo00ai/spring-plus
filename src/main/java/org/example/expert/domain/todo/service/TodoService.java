@@ -1,16 +1,20 @@
 package org.example.expert.domain.todo.service;
 
+import java.time.LocalDateTime;
+
 import lombok.RequiredArgsConstructor;
 import org.example.expert.client.WeatherClient;
-import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
+import org.example.expert.domain.todo.dto.request.TodoSearchCond;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.entity.User;
+import org.example.expert.domain.user.repository.UserRepository;
+import org.example.expert.security.CustomUserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,14 +23,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class TodoService {
 
+    private final UserRepository userRepository;
     private final TodoRepository todoRepository;
     private final WeatherClient weatherClient;
 
-    public TodoSaveResponse saveTodo(AuthUser authUser, TodoSaveRequest todoSaveRequest) {
-        User user = User.fromAuthUser(authUser);
+    @Transactional
+    public TodoSaveResponse saveTodo(CustomUserPrincipal userPrincipal, TodoSaveRequest todoSaveRequest) {
+
+        User user = userRepository.findById(userPrincipal.getUser().getId())
+            .orElseThrow(() -> new InvalidRequestException("User not found"));
 
         String weather = weatherClient.getTodayWeather();
 
@@ -47,10 +54,25 @@ public class TodoService {
         );
     }
 
-    public Page<TodoResponse> getTodos(int page, int size) {
+    @Transactional(readOnly = true)
+    public Page<TodoResponse> getTodos(TodoSearchCond cond, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(pageable);
+        System.out.println("cond weather = " + cond.getWeather());
+        System.out.println("cond startDate = " + cond.getStartDate());
+        System.out.println("cond endDate = " + cond.getEndDate());
+
+
+
+        LocalDateTime startDate = (cond.getStartDate() != null) ?  cond.getStartDate().atStartOfDay() : null;
+        LocalDateTime endDate = (cond.getEndDate() != null) ? cond.getEndDate().atTime(23,59,59):null;
+        String weather = cond.getWeather();
+
+        System.out.println("weather = " + weather);
+        System.out.println("startDate = " + startDate);
+        System.out.println("endDate = " + endDate);
+
+        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(weather,startDate,endDate,pageable);
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
@@ -63,8 +85,11 @@ public class TodoService {
         ));
     }
 
+
+
+    @Transactional(readOnly = true)
     public TodoResponse getTodo(long todoId) {
-        Todo todo = todoRepository.findByIdWithUser(todoId)
+        Todo todo = todoRepository.findByIdWithUserQueryDsl(todoId)
                 .orElseThrow(() -> new InvalidRequestException("Todo not found"));
 
         User user = todo.getUser();

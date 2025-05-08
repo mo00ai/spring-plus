@@ -15,11 +15,19 @@ public class User extends Timestamped {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String nickname;
     @Column(unique = true)
     private String email;
     private String password;
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
+
+    public User(Long id, String nickname, String email, UserRole userRole) {
+        this.id = id;
+        this.nickname = nickname;
+        this.email = email;
+        this.userRole = userRole;
+    }
 
     public User(String email, String password, UserRole userRole) {
         this.email = email;
