@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.expert.domain.common.annotation.Auth;
 import org.example.expert.domain.common.dto.AuthUser;
+import org.example.expert.domain.todo.dto.request.TodoQueryDslCond;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
 import org.example.expert.domain.todo.dto.request.TodoSearchCond;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
@@ -41,6 +42,17 @@ public class TodoController {
 
 
         return ResponseEntity.ok(todoService.getTodos(cond, page, size));
+    }
+
+    @GetMapping("/todos/querydsl")
+    public ResponseEntity<Page<TodoResponse>> getTodosByQueryDsl(
+        TodoQueryDslCond cond,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+
+
+        return ResponseEntity.ok(todoService.getTodosByQueryDsl(cond, page, size));
     }
 
     @GetMapping("/todos/{todoId}")

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.example.expert.client.WeatherClient;
 import org.example.expert.domain.common.exception.InvalidRequestException;
+import org.example.expert.domain.todo.dto.request.TodoQueryDslCond;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
 import org.example.expert.domain.todo.dto.request.TodoSearchCond;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
@@ -58,19 +59,10 @@ public class TodoService {
     public Page<TodoResponse> getTodos(TodoSearchCond cond, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        System.out.println("cond weather = " + cond.getWeather());
-        System.out.println("cond startDate = " + cond.getStartDate());
-        System.out.println("cond endDate = " + cond.getEndDate());
-
-
-
         LocalDateTime startDate = (cond.getStartDate() != null) ?  cond.getStartDate().atStartOfDay() : null;
         LocalDateTime endDate = (cond.getEndDate() != null) ? cond.getEndDate().atTime(23,59,59):null;
         String weather = cond.getWeather();
 
-        System.out.println("weather = " + weather);
-        System.out.println("startDate = " + startDate);
-        System.out.println("endDate = " + endDate);
 
         Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(weather,startDate,endDate,pageable);
 
@@ -103,5 +95,17 @@ public class TodoService {
                 todo.getCreatedAt(),
                 todo.getModifiedAt()
         );
+    }
+
+    public Page<TodoResponse> getTodosByQueryDsl(TodoQueryDslCond cond, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        LocalDateTime startDate = (cond.getStartDate() != null) ?  cond.getStartDate().atStartOfDay() : null;
+        LocalDateTime endDate = (cond.getEndDate() != null) ? cond.getEndDate().atTime(23,59,59):null;
+
+        todoRepository.findAllBySearch(cond.getTitle(), cond.getNickname(), startDate, endDate, pageable);
+
+        return null;
     }
 }
