@@ -9,6 +9,7 @@ import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.todo.dto.request.TodoQueryDslCond;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
 import org.example.expert.domain.todo.dto.request.TodoSearchCond;
+import org.example.expert.domain.todo.dto.response.TodoPageResponse;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
 import org.example.expert.domain.todo.service.TodoService;
@@ -45,8 +46,8 @@ public class TodoController {
     }
 
     @GetMapping("/todos/querydsl")
-    public ResponseEntity<Page<TodoResponse>> getTodosByQueryDsl(
-        TodoQueryDslCond cond,
+    public ResponseEntity<Page<TodoPageResponse>> getTodosByQueryDsl(
+        @Valid TodoQueryDslCond cond,
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "10") int size
     ) {

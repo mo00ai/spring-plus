@@ -8,6 +8,7 @@ import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.dto.request.TodoQueryDslCond;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
 import org.example.expert.domain.todo.dto.request.TodoSearchCond;
+import org.example.expert.domain.todo.dto.response.TodoPageResponse;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
 import org.example.expert.domain.todo.entity.Todo;
@@ -97,15 +98,16 @@ public class TodoService {
         );
     }
 
-    public Page<TodoResponse> getTodosByQueryDsl(TodoQueryDslCond cond, int page, int size) {
+    public Page<TodoPageResponse> getTodosByQueryDsl(TodoQueryDslCond cond, int page, int size) {
 
         Pageable pageable = PageRequest.of(page - 1, size);
 
         LocalDateTime startDate = (cond.getStartDate() != null) ?  cond.getStartDate().atStartOfDay() : null;
         LocalDateTime endDate = (cond.getEndDate() != null) ? cond.getEndDate().atTime(23,59,59):null;
 
-        todoRepository.findAllBySearch(cond.getTitle(), cond.getNickname(), startDate, endDate, pageable);
+        Page<TodoPageResponse> allBySearch = todoRepository.findAllBySearch(cond.getTitle(), cond.getNickname(),
+            startDate, endDate, pageable);
 
-        return null;
+        return allBySearch;
     }
 }
